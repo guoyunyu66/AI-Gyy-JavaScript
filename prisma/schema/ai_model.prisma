@@ -1,0 +1,20 @@
+enum AIModelProvider {
+  OPENAI
+  GOOGLE
+  ANTHROPIC
+  // ... 其他提供商
+}
+
+model AIModel {
+  id             String          @id @default(cuid()) // 模型记录ID
+  name           String // 模型名称 (e.g., "GPT-4", "Claude 3 Opus")
+  api_identifier String          @unique // API 调用时使用的模型标识 (e.g., "gpt-4", "claude-3-opus-20240229")
+  provider       AIModelProvider // 模型提供商
+  api_key_env    String? // 存储 API Key 的环境变量名 (可选, 如果有统一管理API Key的地方)
+  base_url     String?   // 模型的 API base URL (可选, 如果不是标准URL)
+  // description  String?   // 模型描述
+  // capabilities Json?     // 模型能力描述 (e.g., { vision: true, max_tokens: 4096 })
+  is_active      Boolean         @default(true) // 是否启用
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+}

@@ -1,0 +1,12 @@
+model Conversation {
+  id         String   @id @default(cuid()) // 对话ID
+  user_id    String // 关联用户ID
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  title      String? // 对话标题，可选
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  messages Message[] // 对话包含的消息
+
+  @@index([user_id]) // 为 user_id 创建索引以优化查询
+}
