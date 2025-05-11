@@ -1,8 +1,8 @@
-# AIggy - 仿个人风格的 AI 对话助手
+# AI-Gyy - 仿个人风格的 AI 对话助手
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.x-black?logo=next.js&logoColor=white)](https://nextjs.org) [![React](https://img.shields.io/badge/React-19-blue?logo=react&logoColor=white)](https://react.dev) [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.x-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com) [![Supabase](https://img.shields.io/badge/Supabase-brightgreen?logo=supabase&logoColor=white)](https://supabase.com) [![Prisma](https://img.shields.io/badge/Prisma-6.x-1B222D?logo=prisma&logoColor=white)](https://www.prisma.io/) [![Vercel AI SDK](https://img.shields.io/badge/Vercel%20AI%20SDK-gray?logo=vercel&logoColor=white)](https://sdk.vercel.ai) [![OpenAI](https://img.shields.io/badge/OpenAI-42B5A0?logo=openai&logoColor=white)](https://openai.com)
 
-本项目 (`aigyy`) 旨在开发一个能完美复刻我（项目创建者）个人对话风格的 AI 助手。你将体验到一个仿佛在与我本人直接交流的 AI，它不仅能理解你的话，更能用我独特的语气和风格来回应你。
+本项目 (`AI-Gyy`) 旨在开发一个能完美复刻我（项目创建者）个人对话风格的 AI 助手。你将体验到一个仿佛在与我本人直接交流的 AI，它不仅能理解你的话，更能用我独特的语气和风格来回应你。
 
 详细的项目架构设计，请参见 [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)。
 
