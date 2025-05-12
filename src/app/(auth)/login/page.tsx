@@ -1,11 +1,8 @@
-import LoginForm from "@/modules/auth/login/LoginForm";
+'use client'
+
+import React from 'react'
+import { LoginForm } from '@/module/auth/login-form'
 
 export default function LoginPage() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <main>
-        <LoginForm />
-      </main>
-    </div>
-  );
-}
+  return <LoginForm />
+} 

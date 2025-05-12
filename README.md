@@ -1,107 +1,104 @@
-# AI-Gyy - 仿个人风格的 AI 对话助手
+# AIGyy 智能对话助手
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.x-black?logo=next.js&logoColor=white)](https://nextjs.org) [![React](https://img.shields.io/badge/React-19-blue?logo=react&logoColor=white)](https://react.dev) [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.x-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com) [![Supabase](https://img.shields.io/badge/Supabase-brightgreen?logo=supabase&logoColor=white)](https://supabase.com) [![Prisma](https://img.shields.io/badge/Prisma-6.x-1B222D?logo=prisma&logoColor=white)](https://www.prisma.io/) [![Vercel AI SDK](https://img.shields.io/badge/Vercel%20AI%20SDK-gray?logo=vercel&logoColor=white)](https://sdk.vercel.ai) [![OpenAI](https://img.shields.io/badge/OpenAI-42B5A0?logo=openai&logoColor=white)](https://openai.com)
+AIGyy是一个现代化的AI对话助手网页应用，基于Next.js和Hono构建，提供流畅的对话体验和用户友好的界面。
 
-本项目 (`AI-Gyy`) 旨在开发一个能完美复刻我（项目创建者）个人对话风格的 AI 助手。你将体验到一个仿佛在与我本人直接交流的 AI，它不仅能理解你的话，更能用我独特的语气和风格来回应你。
+## 核心功能
 
-详细的项目架构设计，请参见 [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)。
+- 用户认证系统（注册、登录、第三方OAuth）
+- 持久化的对话历史记录
+- 流式AI回复输出
+- 上下文记忆支持
+- AI思考过程可视化
+- 响应式UI设计（移动端/桌面端）
 
-## 🚀 快速开始 (Getting Started)
+## 技术栈
 
-首先，确保你已经安装了 Node.js (推荐版本 >= 18.x) 和 pnpm。
+- **前端**: Next.js 14+, React, TailwindCSS, ShadcnUI
+- **后端**: Hono, Vercel AI SDK, Supabase
+- **数据库**: Supabase Postgres, Prisma ORM
+- **开发工具**: TypeScript, ESLint, Prettier, pnpm
 
-1.  **克隆仓库 (Clone the repository):**
-    ```bash
-    git clone <your-repository-url>
-    cd aigyy
-    ```
+## 快速开始
 
-2.  **安装依赖 (Install dependencies):**
-    ```bash
-    pnpm install
-    ```
+### 前置要求
 
-3.  **配置环境变量 (Set up environment variables):**
-    复制 `.env.example` (如果项目中有提供) 为 `.env.local`，并根据你的 Supabase 和 OpenAI 配置填写必要的环境变量。至少需要以下变量：
-    ```env
-    # Supabase
-    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-    # SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key # 如果后端操作需要
+- Node.js 18+
+- pnpm 8+
+- Supabase账户
+- OpenAI API密钥
 
-    # OpenAI
-    OPENAI_API_KEY=your_openai_api_key
+### 安装
 
-    # 其他自定义环境变量...
-    ```
-    请参考 [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md) 中关于环境变量管理的部分获取更详细的信息。
+1. 克隆仓库
 
-4.  **数据库迁移与生成 (Database migration and generation):**
-    本项目使用 Prisma 与 Supabase (PostgreSQL) 交互。
-    ```bash
-    # (可选) 如果 schema 有变更，应用到数据库
-    pnpm run db:push
+```bash
+git clone https://github.com/your-username/aigyy.git
+cd aigyy
+```
 
-    # 生成 Prisma Client
-    pnpm run db:generate
-    ```
-    你也可以使用 `pnpm run prisma:studio` 来打开 Prisma Studio 查看和管理数据库。
+2. 安装依赖
 
-5.  **运行开发服务器 (Run the development server):**
-    ```bash
-    pnpm run dev
-    ```
+```bash
+pnpm install
+```
 
-    然后在浏览器中打开 [http://localhost:3000](http://localhost:3000) 查看结果。
+3. 环境变量配置
 
-    你可以通过修改 `src/app/page.tsx` (或其他相关页面和组件) 来开始编辑页面。文件修改后，页面会自动更新。
+复制`.env.example`文件到`.env.local`并填写必要的环境变量:
 
-## 🛠️ 可用脚本 (Available Scripts)
+```bash
+cp .env.example .env.local
+```
 
-在 `package.json` 中，你可以找到以下常用脚本：
+4. 初始化数据库
 
--   `pnpm run dev`: 以 Turbopack 模式启动 Next.js 开发服务器。
--   `pnpm run build`: 构建生产版本的应用。
--   `pnpm run start`: 启动生产服务器 (需要先执行 `build`)。
--   `pnpm run lint`: 使用 Next.js 内置的 ESLint 配置检查代码。
--   `pnpm run lint:fix`: 自动修复 ESLint 发现的问题。
--   `pnpm run format`: 使用 Prisma Formatter 和 Prettier 格式化代码。
--   `pnpm run db:generate`: 生成 Prisma Client。
--   `pnpm run prisma:studio`: 启动 Prisma Studio。
--   `pnpm run prisma:validate`: 验证 Prisma schema。
--   `pnpm run db:push`: 将 Prisma schema 的状态同步到数据库 (不适用于生产环境的迁移)。
--   `pnpm run db:seed`: (如果配置了) 运行数据库填充脚本。
+```bash
+pnpm prisma generate
+pnpm prisma db push
+```
 
-## ✨ 技术栈 (Tech Stack)
+5. 启动开发服务器
 
--   **框架 (Framework):** [Next.js](https://nextjs.org/) (App Router, React Server Components, Server Actions)
--   **UI:** [Shadcn UI](https://ui.shadcn.com/), [Tailwind CSS](https://tailwindcss.com/)
--   **后端即服务 (BaaS):** [Supabase](https://supabase.com/) (Authentication, PostgreSQL Database, Storage, Vector Embeddings via `pgvector`)
--   **ORM:** [Prisma](https://www.prisma.io/)
--   **AI SDK:** [Vercel AI SDK](https://sdk.vercel.ai/)
--   **LLM Provider:** [OpenAI](https://openai.com/) (或其他兼容 Vercel AI SDK 的模型)
--   **部署 (Deployment):** [Vercel](https://vercel.com/)
+```bash
+pnpm dev
+```
 
-## 📖 了解更多 (Learn More)
+应用将在 [http://localhost:3000](http://localhost:3000) 运行。
 
-要了解有关 Next.js 的更多信息，请查看以下资源：
+## 项目结构
 
--   [Next.js Documentation](https://nextjs.org/docs) - 了解 Next.js 的功能和 API。
--   [Learn Next.js](https://nextjs.org/learn) - 一个交互式的 Next.js 教程。
--   [Vercel AI SDK Documentation](https://sdk.vercel.ai/docs) - 学习如何使用 Vercel AI SDK 构建 AI 应用。
--   [Supabase Documentation](https://supabase.com/docs) - 学习如何使用 Supabase。
--   [Prisma Documentation](https://www.prisma.io/docs) - 学习如何使用 Prisma。
+```
+aiggyy/
+├── app/                        # Next.js App Router
+│   ├── api/                    # API路由(Hono)
+│   ├── (auth)/                 # 认证页面
+│   └── (dashboard)/            # 应用页面
+├── components/                 # React组件
+├── server/                     # 服务器端逻辑
+│   ├── api/                    # Hono API定义
+│   ├── middleware/             # Hono中间件
+│   └── services/               # 业务逻辑服务
+├── lib/                        # 工具库
+├── hooks/                      # React Hooks
+└── prisma/                     # Prisma配置和迁移
+```
 
-欢迎查看 [Next.js GitHub repository](https://github.com/vercel/next.js) - 欢迎你的反馈和贡献！
+## 开发指南
 
-## ☁️ 部署到 Vercel (Deploy on Vercel)
+详细的开发指南和架构文档请参考 [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)。
 
-部署 Next.js 应用最简单的方法是使用 [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)，它由 Next.js 的创建者提供。
+## 贡献指南
 
-有关更多详细信息，请参阅我们的 [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying)。
+1. Fork 仓库
+2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 开启 Pull Request
 
-确保在 Vercel 项目设置中配置了所有必要的环境变量。
+## 许可证
 
----
+这个项目采用 MIT 许可证 - 详见 LICENSE 文件
 
-祝你编码愉快！🎉
+## 联系方式
+
+项目维护者 - your.email@example.com

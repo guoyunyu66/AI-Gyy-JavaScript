@@ -1,0 +1,29 @@
+// prisma/schema/chat.prisma
+
+model Conversation {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id") @db.Uuid // 关联 Profile.id
+  title     String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  model     String?
+  messages  Message[]
+  user      Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model Message {
+  id              String       @id @default(uuid())
+  conversationId  String       @map("conversation_id")
+  role            String       // 'user' or 'assistant'
+  content         String       @db.Text // 使用Text类型存储可能较长的内容
+  createdAt       DateTime     @default(now()) @map("created_at")
+  tokens          Int?
+  thinkingProcess String?      @map("thinking_process") @db.Text // 思考过程也可能较长
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("messages")
+} 
