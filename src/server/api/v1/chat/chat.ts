@@ -1,68 +1,111 @@
 import { Context } from 'hono'
 import { streamSSE, SSEStreamingApi } from 'hono/streaming'
 import { streamChatResponse, getChatCompletion } from './lib/chat.lib'
-import { authMiddleware, AuthEnv } from '@/server/middleware/auth'
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'; // 引入类型
+import { AuthEnv } from '@/server/middleware/auth' // authMiddleware is not directly used in handlers but AuthEnv is
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { logger } from '@/lib/logger';
 
-// 定义路由的环境类型
-type ChatEnv = AuthEnv['Variables'] 
+const log = logger.child({ module: 'chat-handler' });
 
-// 流式聊天接口处理
+type ChatEnv = AuthEnv['Variables']
+
+interface ChatRequestBody {
+  messages: ChatCompletionMessageParam[];
+  conversationId?: string;
+  model?: string; // Allow client to specify model
+}
+
 export const streamChatHandler = async (c: Context<{ Variables: ChatEnv }>) => {
-  // 显式定义请求体类型或使用 zod schema 推断
-  const { messages, conversationId } = await c.req.json<{ messages: ChatCompletionMessageParam[], conversationId?: string }>(); 
-  const userId = c.get('userId')
+  let requestBody: ChatRequestBody | null = null;
+  try {
+    requestBody = await c.req.json<ChatRequestBody>();
+    log.info({ path: c.req.path, method: c.req.method, requestBody: { conversationId: requestBody.conversationId, model: requestBody.model, messagesCount: requestBody.messages.length } }, '流式聊天接口请求参数');
+  } catch (error) {
+    log.error({ path: c.req.path, method: c.req.method, error }, '解析流式聊天请求参数失败');
+    return c.json({ error: 'Invalid request body' }, 400);
+  }
+  const { messages, conversationId, model } = requestBody;
+  const userId = c.get('userId');
 
-  // 确保 userId 存在
   if (!userId) {
+    log.warn('streamChatHandler: 未授权的访问尝试');
     return c.json({ error: 'Unauthorized' }, 401);
   }
+  log.info({ userId, conversationId, model }, '开始处理流式聊天请求，调用 streamChatResponse');
 
   return streamSSE(c, async (stream: SSEStreamingApi) => {
-    // 注意：直接传递 stream.writeln 可能导致类型问题，改为包装一下
+    let finalConversationIdFromServer: string | undefined;
+    log.debug({ userId, conversationId, model }, 'streamSSE 回调开始');
+
     await streamChatResponse({
       messages,
       conversationId,
-      userId, // 传递 userId
+      userId,
+      model,
       onChunk: async (chunk) => {
-        // Hono/streaming 要求数据以 'data: ...\n\n' 格式发送
-        // stream.writeln 会自动处理部分格式，但最好明确
-        // 如果 chunk 是纯文本，可以直接 writeln
-        // 如果 chunk 是 JSON 字符串 (比如我们错误处理时)，需要确保格式正确
-        // 假设 chat.lib.ts 的 onChunk 传递的是纯文本 delta
         try {
-          await stream.writeSSE({ data: chunk }); // 使用 writeSSE 保证格式
+          await stream.writeSSE({ data: chunk });
         } catch (e) {
-          console.error("Error writing SSE chunk:", e);
-          // 尝试关闭流或进行其他错误处理
-          stream.close(); // 尝试关闭
+          log.error({ error: e, userId, conversationId }, "写入SSE数据块时出错");
         }
       },
-      onComplete: async () => {
-        await stream.close(); // 确保流被关闭
+      onComplete: async (finalConversationId, assistantResponse) => {
+        finalConversationIdFromServer = finalConversationId;
+        try {
+          await stream.writeSSE({
+            event: 'conversationComplete',
+            data: JSON.stringify({ conversationId: finalConversationId }),
+          });
+          log.info({ userId, conversationId: finalConversationId, responseLength: assistantResponse.length }, '流式聊天完成，已发送完成事件 (conversationComplete)');
+        } catch (e) {
+          log.error({ error: e, userId, conversationId: finalConversationId }, "写入 conversationComplete SSE 事件时出错");
+        }
+        await stream.close();
+        log.debug({ userId, conversationId: finalConversationIdFromServer }, 'SSE流已关闭 (onComplete)');
       },
-    })
-  })
+      onError: async (error) => {
+        log.error({ error, userId, conversationId }, 'streamChatResponse 内部回调 onError 触发');
+        try {
+          await stream.writeSSE({
+            event: 'error',
+            data: JSON.stringify({ message: error instanceof Error ? error.message : 'Stream processing error' })
+          });
+        } catch (e) {
+          log.error({ error: e, userId, conversationId }, "写入 error SSE 事件时出错");
+        }
+        await stream.close();
+        log.debug({ userId, conversationId }, 'SSE流已关闭 (onError)');
+      }
+    });
+    log.info({ userId, finalConversationId: finalConversationIdFromServer }, 'streamChatResponse 调用结束，流式处理已设置');
+  });
 }
 
-// 完整聊天响应接口处理
 export const completionChatHandler = async (c: Context<{ Variables: ChatEnv }>) => {
-  const { messages, conversationId } = await c.req.json<{ messages: ChatCompletionMessageParam[], conversationId?: string }>();
-  const userId = c.get('userId')
+  let requestBody: ChatRequestBody | null = null;
+  try {
+    requestBody = await c.req.json<ChatRequestBody>();
+    log.info({ path: c.req.path, method: c.req.method, requestBody: { conversationId: requestBody.conversationId, model: requestBody.model, messagesCount: requestBody.messages.length } }, '普通聊天接口请求参数');
+  } catch (error) {
+    log.error({ path: c.req.path, method: c.req.method, error }, '解析普通聊天请求参数失败');
+    return c.json({ error: 'Invalid request body' }, 400);
+  }
+  const { messages, conversationId, model } = requestBody;
+  const userId = c.get('userId');
 
-  // 确保 userId 存在
   if (!userId) {
+    log.warn('completionChatHandler: 未授权的访问尝试');
     return c.json({ error: 'Unauthorized' }, 401);
   }
+  log.info({ userId, conversationId, model }, '开始处理普通聊天补全请求，调用 getChatCompletion');
   
-  // 将参数包装成对象传递
-  const response = await getChatCompletion({ messages, conversationId, userId }); 
+  const response = await getChatCompletion({ messages, conversationId, userId, model }); 
   
-  // 根据 chat.lib.ts 返回的状态决定响应
   if (response.status === 'success') {
-     return c.json({ text: response.text, conversationId: response.conversationId });
+    log.info({ userId, conversationId: response.conversationId, responseTextLength: response.text?.length }, '普通聊天补全成功，准备响应');
+    return c.json({ text: response.text, conversationId: response.conversationId });
   } else {
-     // 返回错误信息和适当的状态码
-     return c.json({ error: response.message || 'Failed to get completion' }, 500);
+    log.error({ userId, conversationId: response.conversationId, error: response.message }, '普通聊天补全失败，准备错误响应');
+    return c.json({ error: response.message || 'Failed to get completion', conversationId: response.conversationId }, 500);
   }
 } 
