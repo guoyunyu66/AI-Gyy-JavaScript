@@ -1,0 +1,26 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 后端开发指南
+
+本规则为 `prisma`, `src/contexts`, `src/hooks`, `src/lib`, 和 `src/server` 目录下的后端服务、数据库交互和服务器端逻辑的开发提供指导。
+
+## 目录结构
+
+-   `prisma`: 包含 Prisma schema 定义 ([prisma/base.prisma](mdc:prisma/base.prisma), [prisma/schema/](mdc:prisma/schema)) 和迁移文件。这是数据库结构的真实来源。
+-   `src/contexts`: 管理共享的应用状态和上下文，可能包括身份验证 ([src/contexts/auth-context.tsx](mdc:src/contexts/auth-context.tsx))。
+-   `src/hooks`: 自定义 React 钩子，可能与后端服务交互或管理复杂的客户端逻辑 ([src/hooks/use-chat.ts](mdc:src/hooks/use-chat.ts))。
+-   `src/lib`: 工具函数、共享库和配置。包括 Supabase 客户端设置 ([src/lib/supabase/](mdc:src/lib/supabase))、Prisma 客户端实例 ([src/lib/prisma/](mdc:src/lib/prisma)) 和通用工具 ([src/lib/utils.ts](mdc:src/lib/utils.ts))。
+-   `src/server`: 存放服务器端 API 逻辑和中间件。API 路由在此定义 ([src/server/api/](mdc:src/server/api))，中间件 ([src/server/middleware/](mdc:src/server/middleware)) 可用于请求处理。
+
+## 最佳实践
+
+-   **API 设计:** 如果使用 Hono 或类似框架，设计 RESTful 或 GraphQL API。确保进行适当的请求验证、身份验证和错误处理。
+-   **数据库交互:** 使用 Prisma ORM 进行所有数据库操作。在 `prisma/schema` 中定义清晰的模式。利用 `src/lib/prisma` 中的 Prisma Client 进行类型安全的数据库访问。
+-   **身份验证与授权:** 实现健壮的身份验证和授权机制。利用 `src/contexts/auth-context.tsx` 进行前端身份验证状态管理，并适当地保护后端路由。
+-   **错误处理:** 在整个后端实现一致的错误处理。提供有意义的错误消息和状态码。
+-   **配置管理:** 安全地存储配置，并通过一个集中的模块（可能在 `src/lib` 内）进行访问。
+-   **服务器端逻辑:** 将业务逻辑组织在 `src/server/api` 或专用的服务模块中。
+-   **钩子 (`src/hooks`):** 虽然主要在客户端，但钩子可能会抽象出与后端交互的数据获取逻辑。确保这些钩子高效且经过良好测试。

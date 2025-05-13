@@ -8,10 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "db:generate": "prisma generate --schema=./prisma/base.prisma",
-    "db:push": "prisma db push --schema=./prisma/base.prisma",
-    "db:migrate:dev": "prisma migrate dev --schema=./prisma/base.prisma",
-    "db:studio": "prisma studio --schema=./prisma/base.prisma"
+    "db:generate": "prisma generate --schema=./prisma/schema/",
+    "db:push": "prisma db push --schema=./prisma/schema/",
+    "db:migrate:dev": "prisma migrate dev --schema=./prisma/schema/",
+    "db:studio": "prisma studio --schema=./prisma/schema/"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.5.0",
