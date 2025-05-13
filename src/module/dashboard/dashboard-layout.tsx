@@ -7,7 +7,7 @@ import { Sidebar } from '@/module/sidebar/sidebar'
 import type { Conversation } from '@/types'
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { session, loading: authLoading } = useAuth()
+  const { session, user, loading: authLoading } = useAuth()
   const router = useRouter()
 
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -26,14 +26,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         setConversationsLoading(true)
         setConversationsError(null)
         try {
-          const response = await fetch('/api/conversations', {
+          const response = await fetch('/api/v1/chat/conversations', {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
             },
           })
           if (!response.ok) {
             if (response.status === 401) {
-              console.warn('[DashboardLayout] Received 401 from /api/conversations, redirecting to login.')
+              console.warn('[DashboardLayout] Received 401 from /api/v1/chat/conversations, redirecting to login.')
               router.push('/login')
               return
             }
@@ -82,7 +82,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <div className="w-64 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 fixed h-full">
-        <Sidebar conversations={conversations} onNewChat={handleNewChat} />
+        <Sidebar conversations={conversations} onNewChat={handleNewChat} user={user} />
         {conversationsError && <div className="p-2 text-red-500 text-xs">加载会话失败: {conversationsError}</div>}
       </div>
       <div className="flex-1 ml-64">

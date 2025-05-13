@@ -40,16 +40,13 @@ export const authMiddleware = () => {
 
     const authHeader = c.req.header('Authorization')
     const token = authHeader?.replace('Bearer ', '')
-    console.log('[AuthMiddleware] Authorization Header:', authHeader ? 'Present' : 'Missing');
-    console.log('[AuthMiddleware] Extracted Token:', token ? `***${token.slice(-6)}` : 'None'); // 只打印 token 尾部以保护敏感信息
 
     if (!token) {
-      console.log('[AuthMiddleware] No token found, denying access.');
+      console.error('[AuthMiddleware] No token found, denying access.');
       return c.json({ status: 'error', message: '未提供认证令牌' }, 401)
     }
 
-    try {
-      console.log('[AuthMiddleware] Calling supabase.auth.getUser(token)...');
+      try {
       const { data: { user }, error } = await supabase.auth.getUser(token)
 
       if (error || !user) {
@@ -64,8 +61,6 @@ export const authMiddleware = () => {
       console.log('[AuthMiddleware] Token validated successfully. User ID:', user.id);
       c.set('userId', user.id)
 
-      // 继续执行
-      console.log('[AuthMiddleware] Granting access and calling next().');
       await next()
     } catch (error) {
       // 这个 catch 块可能更多是捕获 supabase.auth.getUser 本身的意外错误，而不是认证失败

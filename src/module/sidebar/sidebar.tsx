@@ -1,13 +1,15 @@
 import React from 'react'
 import Link from 'next/link'
 import type { Conversation } from '@/types'
+import { User } from '@supabase/supabase-js'
 
 interface SidebarProps {
   conversations: Conversation[]
   onNewChat: () => void
+  user: User | null
 }
 
-export function Sidebar({ conversations, onNewChat }: SidebarProps) {
+export function Sidebar({ conversations, onNewChat, user }: SidebarProps) {
   return (
     <div className="h-full flex flex-col">
       {/* 新对话按钮 */}
@@ -47,15 +49,22 @@ export function Sidebar({ conversations, onNewChat }: SidebarProps) {
       
       {/* 用户资料 */}
       <div className="border-t border-gray-200 dark:border-gray-800 p-4 mt-auto">
-        <Link href="/profile" className="flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-md">
-          <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center mr-2">
-            👤
+        {user ? (
+          <Link href="/profile" className="flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-md">
+            <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center mr-2">
+              {user.email?.charAt(0).toUpperCase() || '👤'}
+            </div>
+            <div>
+              <div className="font-medium truncate">{user.email}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">查看资料</div>
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center p-2 rounded-md text-gray-500">
+             <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center mr-2">👤</div>
+             <div>加载中...</div>
           </div>
-          <div>
-            <div className="font-medium">用户名</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">查看资料</div>
-          </div>
-        </Link>
+        )}
       </div>
     </div>
   )
