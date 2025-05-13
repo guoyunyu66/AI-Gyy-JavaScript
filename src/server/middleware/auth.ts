@@ -1,5 +1,8 @@
 import { Context, Next } from 'hono'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
+
+const log = logger.child({ module: 'auth-middleware' })
 
 // 定义认证中间件使用的环境变量类型
 export type AuthEnv = {
@@ -25,16 +28,16 @@ if (supabaseUrl && supabaseAnonKey) {
     }
   });
 } else {
-  console.error('[AuthMiddleware] Supabase URL or Anon Key not configured. Auth will not work.')
+  log.error('[认证中间件] Supabase URL 或匿名密钥未配置。认证功能将无法工作。')
 }
 
 // 认证中间件
 export const authMiddleware = () => {
   return async (c: Context<AuthEnv>, next: Next) => {
-    console.log('[AuthMiddleware] Triggered for path:', c.req.path);
+    log.info({ path: c.req.path }, '[认证中间件] 已触发')
 
     if (!supabase) {
-      console.error('[AuthMiddleware] Supabase client not initialized due to missing config.')
+      log.error('[认证中间件] Supabase 客户端因配置缺失未初始化。')
       return c.json({ status: 'error', message: '服务器配置错误' }, 500)
     }
 
@@ -42,7 +45,7 @@ export const authMiddleware = () => {
     const token = authHeader?.replace('Bearer ', '')
 
     if (!token) {
-      console.error('[AuthMiddleware] No token found, denying access.');
+      log.warn({ path: c.req.path }, '[认证中间件] 未找到令牌，拒绝访问。')
       return c.json({ status: 'error', message: '未提供认证令牌' }, 401)
     }
 
@@ -50,22 +53,18 @@ export const authMiddleware = () => {
       const { data: { user }, error } = await supabase.auth.getUser(token)
 
       if (error || !user) {
-        console.warn('[AuthMiddleware] supabase.auth.getUser failed or user not found.');
-        console.warn('[AuthMiddleware] Error:', error?.message);
-        console.warn('[AuthMiddleware] User:', user);
-        console.log('[AuthMiddleware] Denying access.');
+        log.warn({ path: c.req.path, error: error?.message, userId: user?.id }, '[认证中间件] supabase.auth.getUser 失败或用户未找到，拒绝访问。')
         return c.json({ status: 'error', message: '无效的认证令牌或用户不存在' }, 401)
       }
 
       // 将用户ID设置到上下文中
-      console.log('[AuthMiddleware] Token validated successfully. User ID:', user.id);
+      log.info({ path: c.req.path, userId: user.id }, '[认证中间件] 令牌验证成功。')
       c.set('userId', user.id)
 
       await next()
     } catch (error) {
       // 这个 catch 块可能更多是捕获 supabase.auth.getUser 本身的意外错误，而不是认证失败
-      console.error('[AuthMiddleware] Unexpected error during token validation process:', error)
-      console.log('[AuthMiddleware] Denying access due to unexpected error.');
+      log.error({ path: c.req.path, error }, '[认证中间件] 令牌验证过程中发生意外错误，拒绝访问。')
       return c.json({ status: 'error', message: '认证过程中发生错误' }, 500)
     }
   }
@@ -88,7 +87,7 @@ function decodeJwtPayload(token: string): { sub?: string; [key: string]: any } |
     )
     return JSON.parse(jsonPayload)
   } catch (e) {
-    console.error("解码 JWT Payload 失败:", e)
+    log.error({ error: e, token }, '解码 JWT Payload 失败')
     return null
   }
 } 
