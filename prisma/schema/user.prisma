@@ -1,17 +1,11 @@
-model User {
-  id           String   @id @default(cuid()) // 主键，使用 CUID
-  auth_user_id String   @unique // 关联 Supabase Auth User ID，可选，唯一
-  email        String   @unique // 邮箱，唯一
-  name         String? // 用户名，可选
-  avatar_url   String? // 头像 URL，可选
-  phone_number String?  @unique // 电话号码，可选，唯一
-  created_at   DateTime @default(now()) // 创建时间
-  updated_at   DateTime @updatedAt // 更新时间
+model Profile {
+  id            String         @id @default(dbgenerated("auth.uid()")) @db.Uuid // 关联 Supabase auth.users.id
+  email         String?        @unique
+  displayName   String?        @map("display_name")
+  avatarUrl     String?        @map("avatar_url")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  conversations Conversation[]
 
-  conversations Conversation[] // 用户发起的对话
-  messages      Message[] // 用户发送的消息
-
-  // 如果需要，可以在这里添加与其他表的关系，例如：
-  // conversations Conversation[] // 用户发起的对话
-  // messages      Message[]      // 用户发送的消息
-}
+  @@map("profiles") // 明确表名
+}  

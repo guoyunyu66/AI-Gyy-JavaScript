@@ -1,8 +1,0 @@
-generator client {
-  provider        = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql" // 你可以根据需要修改成 mysql, sqlite, mongodb 等
-  url      = env("DATABASE_URL") // 请确保在 .env 文件中设置了 DATABASE_URL
-}

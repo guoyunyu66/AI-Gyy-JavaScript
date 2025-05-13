@@ -1,244 +1,528 @@
-# AI 对话助手项目架构文档
+# AIGyy 智能对话助手 - 架构文档
 
-## 1. 项目概述 (Project Overview)
+## 1. 项目概述
 
-本项目旨在开发一个仿用户个人风格的 AI 对话助手网页版。应用将提供一个直观的聊天界面，用户可以与 AI 进行自然的对话交互。AI 的回复风格将经过特定设计以贴近用户的个性化表达。
+AIGyy是一个现代化的AI对话助手网页应用，基于最新的前端和后端技术栈构建，提供流畅的对话体验和用户友好的界面。该项目支持多轮对话、上下文记忆、历史会话管理、实时流式输出以及思考流程展示等高级特性。
 
-**核心技术栈:**
+### 1.1 核心功能
 
-- **前端:** Next.js (App Router, React Server Components, Server Actions)
-- **UI:** Shadcn UI, Tailwind CSS
-- **后端即服务 (BaaS):** Supabase (Authentication, PostgreSQL Database, Storage, Vector Embeddings via `pgvector`)
-- **AI SDK:** Vercel AI SDK
-- **LLM Provider:** OpenAI (或其他兼容 Vercel AI SDK 的模型)
-- **部署:** Vercel
+- 用户认证系统（注册、登录、第三方OAuth）
+- 持久化的对话历史记录
+- 流式AI回复输出
+- 上下文记忆支持
+- AI思考过程可视化
+- 响应式UI设计（移动端/桌面端）
 
-## 2. 架构图 (Architecture Diagram)
+## 2. 技术栈
 
-```
-+---------------------+      +-----------------------+      +--------------------+
-|     User (Browser)  |<---->|   Next.js Frontend    |<---->| Next.js API Routes |
-+---------------------+      | (Shadcn UI, Tailwind) |      | (Server Actions)   |
-                             +-----------------------+      +--------------------+
-                                       ^    |                        |  ^
-                                       |    |                        |  |
-                                       |    | (Supabase Auth)        |  | (Vercel AI SDK)
-                                       |    |                        |  |
-                                       |    v                        v  |
-+--------------------------------------+----_-------------------------+ |
-|                                Supabase                               |
-|  +-----------------+  +-----------------+  +-----------------------+ |
-|  |   Authentication|  |    Database     |  |   Vector (pgvector)   | |
-|  | (RLS Protection)|  |  (PostgreSQL)   |  | (Knowledge Base for RAG)|
-|  +-----------------+  +-----------------+  +-----------------------+ |
-+-----------------------------------------------------------------------+
-                                       ^
-                                       |
-                                       | (LLM API Call)
-                                       |
-+--------------------------------------+
-|      LLM Provider (e.g., OpenAI)     |
-+--------------------------------------+
-```
+### 2.1 前端技术
 
-**流程简述:**
+- **Next.js 14+**: React全栈框架，负责前端渲染和API路由
+- **ShadcnUI**: 高度可定制的无样式UI组件库
+- **TailwindCSS**: 原子化CSS框架，用于快速构建响应式界面
+- **TypeScript**: 静态类型检查，提高代码质量和开发效率
 
-1.  用户通过浏览器与 Next.js 前端交互。
-2.  前端通过 Next.js API Routes (或 Server Actions) 与后端逻辑通信。
-3.  API Routes 处理用户认证 (Supabase Auth)、调用 AI 模型 (通过 Vercel AI SDK)、与 Supabase 数据库交互。
-4.  Supabase Database 存储用户信息、聊天记录，并通过 `pgvector` 支持知识库的向量搜索 (RAG)。
-5.  Vercel AI SDK 负责与 LLM Provider (如 OpenAI) 通信，并支持流式响应。
+### 2.2 后端技术
 
-## 3. 目录结构 (Directory Structure)
+- **Next.js API Routes**: 服务端API实现
+- **Hono**: 轻量级Web框架，用于API路由和中间件管理
+- **Vercel AI SDK**: AI模型调用和流式处理的统一接口
+- **Supabase**: 数据库和身份认证服务
+- **Prisma ORM**: 类型安全的数据库ORM，简化数据库操作
 
-一个建议的 Next.js (App Router) 项目目录结构：
+### 2.3 数据存储
+
+- **Supabase Postgres**: 关系型数据库，存储用户信息和对话历史
+- **Supabase Auth**: 身份认证服务，支持多种登录方式
+
+### 2.4 部署与CI/CD
+
+- **Vercel**: 应用部署和托管
+- **GitHub Actions**: 持续集成和部署
+
+### 2.5 开发工具
+
+- **pnpm**: 高性能的包管理器，用于依赖管理和脚本执行
+- **TypeScript**: 静态类型检查工具
+- **ESLint + Prettier**: 代码风格检查和格式化工具
+- **Husky + lint-staged**: Git钩子工具，用于提交前代码检查
+- **Jest + React Testing Library**: 单元测试和集成测试框架
+
+## 3. 系统架构
 
 ```
-your-ai-chatbot-app/
-├── app/                                # Next.js App Router
-│   ├── (auth)/                         # 认证相关页面 (登录、注册)
-│   │   ├── login/page.tsx
-│   │   └── signup/page.tsx
-│   ├── (main)/                         # 主应用页面 (需要认证)
-│   │   ├── layout.tsx
-│   │   └── chat/                       # 聊天页面
-│   │       ├── [conversationId]/page.tsx
-│   │       └── page.tsx                # 默认聊天或新聊天
-│   ├── api/                            # API Routes
-│   │   └── chat/                       # AI 对话核心 API
-│   │       └── route.ts                # 使用 Vercel AI SDK
-│   ├── layout.tsx                      # 根布局
-│   └── page.tsx                        # 首页 (例如落地页或跳转逻辑)
-├── components/                         # React 组件
-│   ├── ui/                             # Shadcn UI 生成的组件 (e.g., button.tsx, input.tsx)
-│   ├── auth/                           # 认证相关组件 (e.g., LoginForm.tsx)
-│   ├── chat/                           # 聊天界面组件 (e.g., ChatInput.tsx, MessageList.tsx)
-│   └── common/                         # 通用共享组件
-├── lib/                                # 工具函数、配置等
-│   ├── supabase/                       # Supabase 客户端和相关工具函数
-│   │   ├── client.ts                   # Supabase 客户端 (浏览器端)
-│   │   └── server.ts                   # Supabase 客户端 (服务器端)
-│   │   └── admin.ts                    # Supabase Admin 客户端 (需要更高权限的操作，如 Embedding)
-│   │   └── database.types.ts         # Supabase 数据库类型 (通过 `supabase gen types typescript`)
-│   ├── ai/                             # AI 相关工具函数 (e.g., prompt templates)
-│   ├── utils.ts                        # 通用工具函数
-│   └── types.ts                        # 自定义 TypeScript 类型
-├── prisma/                             # (可选) 如果使用 Prisma 管理 Supabase schema
-│   └── schema.prisma
-├── public/                             # 静态资源
-├── styles/                             # 全局样式
-│   └── globals.css
-├── .env.local                          # 环境变量 (Supabase URL/Keys, OpenAI API Key)
-├── next.config.js
-├── tailwind.config.js
-├── tsconfig.json
-└── package.json
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│                 │     │                 │     │                 │
+│  客户端浏览器   │────▶│  Next.js 应用   │────▶│ Supabase 服务   │
+│                 │     │                 │     │                 │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │                       ▲
+                                 ▼                       │
+                        ┌─────────────────┐              │
+                        │                 │              │
+                        │   Vercel AI SDK │──────────────┘
+                        │                 │
+                        └─────────────────┘
+                                 │
+                                 ▼
+                        ┌─────────────────┐
+                        │                 │
+                        │   AI 模型 API   │
+                        │                 │
+                        └─────────────────┘
 ```
 
-## 4. 核心组件详解 (Core Components Deep Dive)
+## 4. 数据库设计
 
-### 前端 (Frontend - Next.js & Shadcn UI & Tailwind CSS)
+### 4.1 数据库表结构
 
-- **UI 组件 (`components/ui`):** 通过 `npx shadcn-ui@latest add <component>` 添加，可高度自定义。
-- **业务组件 (`components/`):**
-  - `ChatInterface.tsx`: 整体聊天界面布局。
-  - `MessageList.tsx`: 展示聊天消息，支持流式更新。
-  - `MessageItem.tsx`: 单条消息的渲染。
-  - `ChatInput.tsx`: 用户输入框和发送按钮。
-  - `Sidebar.tsx`: (可选) 展示聊天会话列表。
-- **页面 (`app/`):**
-  - `/chat`: 主聊天界面。
-  - `/login`, `/signup`: 用户认证页面。
-- **状态管理:**
-  - 对于简单场景，React Context 或轻量级库如 Zustand/Jotai。
-  - Vercel AI SDK 提供了 `useChat` hook，可以方便地管理聊天状态 (输入、消息列表、加载状态等)。
-- **API 调用:**
-  - 主要通过 `fetch` 或第三方库 (如 `SWR`, `React Query`) 与 Next.js API Routes 或 Server Actions 通信。
-  - `useChat` hook 内部封装了 API 调用逻辑。
+#### 用户表 (users)
 
-### 后端 API (Backend API - Next.js API Routes / Server Actions)
+| 字段名        | 类型        | 描述                 |
+|--------------|------------|---------------------|
+| id           | uuid       | 主键，用户唯一标识     |
+| email        | text       | 用户邮箱             |
+| phone        | text       | 用户手机号           |
+| created_at   | timestamp  | 创建时间             |
+| updated_at   | timestamp  | 更新时间             |
+| avatar_url   | text       | 头像URL             |
+| display_name | text       | 显示名称             |
 
-- **路径:** `app/api/chat/route.ts` (示例)
-- **用户认证:**
-  - 使用 Supabase Auth。Next.js 中间件 (`middleware.ts`) 可以保护需要认证的路由。
-  - Supabase SSR library (`@supabase/ssr`) 用于在服务器端安全地处理用户会话和 cookie。
-- **AI 对话处理:**
-  - 接收前端发送的用户消息。
-  - **(可选 RAG):**
-    - 将用户消息 embedding。
-    - 调用 Supabase Function (或直接在 API Route 中) 执行 `pgvector` 相似性搜索，从 `knowledge_base` 表检索相关上下文。
-  - **Prompt 构建:** 结合用户当前输入、聊天历史、检索到的上下文 (RAG)、以及预设的 AI 风格指令，构建最终的 prompt。
-  - **调用 LLM:** 使用 Vercel AI SDK (`OpenAIStream` 或其他模型的 Stream) 调用 LLM API。
-  - **流式响应:** 将 LLM 的流式响应直接 pipe回给前端。
-- **聊天记录存储:**
-  - 在 AI 返回完整响应后 (或流式传输过程中异步处理)，将用户消息和 AI 回复存入 Supabase `messages` 表。
+#### 会话表 (conversations)
 
-### Supabase (Backend as a Service)
+| 字段名        | 类型        | 描述                 |
+|--------------|------------|---------------------|
+| id           | uuid       | 主键，会话唯一标识     |
+| user_id      | uuid       | 外键，关联users表     |
+| title        | text       | 会话标题             |
+| created_at   | timestamp  | 创建时间             |
+| updated_at   | timestamp  | 更新时间             |
+| model        | text       | 使用的AI模型         |
 
-- **数据库 (PostgreSQL):**
-  - **`users` 表:** 由 Supabase Auth 自动创建和管理，存储用户信息。
-  - **`conversations` 表:**
-    - `id` (uuid, primary key)
-    - `user_id` (uuid, foreign key to `auth.users`)
-    - `title` (text, 可选，会话标题)
-    - `created_at` (timestampz)
-    - `updated_at` (timestampz)
-  - **`messages` 表:**
-    - `id` (uuid, primary key)
-    - `conversation_id` (uuid, foreign key to `conversations`)
-    - `user_id` (uuid, foreign key to `auth.users`, 标记消息发送者，可为空代表 AI)
-    - `content` (text, 消息内容)
-    - `role` (enum: 'user', 'assistant', 'system') - Vercel AI SDK 常用
-    - `created_at` (timestampz)
-  - **`knowledge_base` 表 (用于 RAG):**
-    - `id` (uuid, primary key)
-    - `content` (text, 知识片段原文)
-    - `embedding` (vector, 使用 `pgvector` 类型，例如 `vector(1536)` for OpenAI embeddings)
-    - `metadata` (jsonb, 可选，存储来源等元数据)
-    - `created_at` (timestampz)
-  - **数据库函数 (PostgreSQL Functions):**
-    - `match_documents (query_embedding vector, match_count int)`: 用于执行向量相似性搜索。
-- **认证 (Authentication):**
-  - 提供用户注册、登录 (邮箱密码、OAuth如 Google/GitHub)、密码重置等功能。
-  - 通过 RLS (Row Level Security) 保护数据，确保用户只能访问自己的数据。
-- **Vector (`pgvector`):**
-  - 需要在 Supabase 数据库中启用 `vector` 扩展。
-  - 用于在 `knowledge_base` 表上创建向量索引 (如 HNSW, IVFFlat) 以加速搜索。
-- **Edge Functions:** (可选)
-  - 如果某些需要低延迟或接近用户的计算 (如简单的 embedding 生成、数据预处理)，可以考虑使用 Supabase Edge Functions。
+#### 消息表 (messages)
 
-### AI 模型 (AI Model - e.g., OpenAI GPT via Vercel AI SDK)
+| 字段名           | 类型        | 描述                 |
+|-----------------|------------|---------------------|
+| id              | uuid       | 主键，消息唯一标识     |
+| conversation_id | uuid       | 外键，关联conversations表 |
+| role            | text       | 角色(user/assistant) |
+| content         | text       | 消息内容             |
+| created_at      | timestamp  | 创建时间             |
+| tokens          | integer    | 使用的token数量      |
+| thinking_process | text       | AI思考过程(可选)     |
 
-- **模型选择:**
-  - 根据需求选择合适的模型，如 `gpt-3.5-turbo` (性价比高) 或 `gpt-4` (能力更强)。
-- **Prompt Engineering:**
-  - **核心环节，用于定制 AI 风格。**
-  - 设计系统消息 (System Message) 来定义 AI 的角色、个性、说话风格、限制等。
-  - 例如："你是一个幽默风趣、喜欢使用网络用语的 AI 助手，你的回答应该简洁且带有一些俏皮话。请模仿 [用户昵称] 的风格来回答问题。"
-  - 结合 few-shot examples (少量示例对话) 可能效果更好。
+### 4.2 Prisma Schema
 
-### Vercel AI SDK
+项目使用Prisma ORM进行数据库操作，以下是对应的Prisma schema定义：
 
-- **核心 Hook:** `useChat()`
-  - 简化前端与后端流式 API 的交互。
-  - 自动管理消息列表、用户输入、加载状态、错误处理。
-- **流式 API:** `OpenAIStream`, `StreamingTextResponse`
-  - 在 Next.js API Route 中使用，将 LLM 的响应以流的形式直接返回给前端，实现打字机效果。
+```prisma
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
 
-## 5. 数据流 (Data Flow)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-**用户发送消息场景:**
+model User {
+  id           String         @id @default(uuid())
+  email        String?        @unique
+  phone        String?        @unique
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  avatarUrl    String?        @map("avatar_url")
+  displayName  String?        @map("display_name")
+  conversations Conversation[]
 
-1.  **用户输入:** 用户在前端 `ChatInput` 组件中输入消息并点击发送。
-2.  **前端处理:**
-    - `useChat` hook 将用户消息添加到本地消息列表 (乐观更新)。
-    - `useChat` hook 调用 `app/api/chat/route.ts`。
-3.  **后端 API (`app/api/chat/route.ts`):**
-    - **认证检查:** 从请求中获取 Supabase 用户会话，验证用户身份。
-    - **(可选 RAG) 知识检索:**
-      - 使用 OpenAI API (或其他 embedding 服务) 将用户查询转换为 embedding 向量。
-      - 调用 Supabase 数据库函数 `match_documents`，在 `knowledge_base` 表中搜索相似的向量，获取相关文本片段。
-    - **构建 Prompt:**
-      - 获取最近的聊天历史 (从 Supabase `messages` 表或由 `useChat` 传入)。
-      - 组装 System Message (定义 AI 风格)、聊天历史、(可选的 RAG 上下文)、用户当前消息。
-    - **调用 LLM:** 使用 Vercel AI SDK 的 `OpenAIStream` (或其他模型的 Stream) 向 OpenAI API 发送请求。
-    - **流式响应:**
-      - 将 OpenAI API 返回的 token 流通过 `StreamingTextResponse` 直接流回给前端。
-      - **异步存储聊天记录:** 在流处理的同时或之后 (例如使用 `onCompletion` 回调)，将用户消息和完整的 AI 回复异步存入 Supabase `messages` 表和 `conversations` 表。
-4.  **前端接收与展示:**
-    - `useChat` hook 接收到流式响应，并实时更新消息列表中的 AI 回复。
-    - `MessageItem` 组件渲染 AI 的打字机效果。
+  @@map("users")
+}
 
-## 6. 关键技术点 (Key Technical Points)
+model Conversation {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  title      String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  model      String?
+  messages   Message[]
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-- **Supabase RLS (Row Level Security):**
-  - 为 `conversations` 和 `messages` 表配置 RLS策略，确保每个用户只能创建、读取、更新、删除自己的数据。
-  - 例如，`messages` 表的 SELECT 策略: `auth.uid() = user_id`。
-- **Vercel AI SDK 流式体验:**
-  - 利用 `useChat` 和 `StreamingTextResponse` 实现流畅的、即时反馈的聊天体验。
-- **Prompt 工程与个性化:**
-  - 精心设计的 System Prompt 是实现"仿用户风格"的关键。
-  - 考虑允许用户自定义或选择不同的 AI 风格。
-- **`pgvector` 的使用与优化:**
-  - 在 `knowledge_base` 表的 `embedding` 列上创建合适的索引 (如 `USING HNSW (embedding vector_cosine_ops)`) 来提高向量搜索性能。
-  - 定期更新或重新生成 embeddings 以保持知识库的时效性。
-- **环境变量管理:**
-  - 将所有敏感信息 (API Keys, Supabase URL) 存储在 `.env.local` (本地) 和 Vercel 的环境变量 (生产) 中。
-- **错误处理与日志:**
-  - 在前端和后端实现健壮的错误处理机制。
-  - 考虑使用日志服务 (如 Vercel Logs, Sentry) 来监控和排查问题。
+  @@index([userId])
+  @@map("conversations")
+}
 
-## 7. 部署 (Deployment)
+model Message {
+  id              String       @id @default(uuid())
+  conversationId  String       @map("conversation_id")
+  role            String       // 'user' or 'assistant'
+  content         String
+  createdAt       DateTime     @default(now()) @map("created_at")
+  tokens          Int?
+  thinkingProcess String?      @map("thinking_process")
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-- **Next.js 应用:**
-  - 直接部署到 **Vercel** 平台。Vercel 对 Next.js 提供了一流的支持。
-  - 连接 GitHub 仓库，实现 CI/CD 自动化部署。
-  - 在 Vercel 项目设置中配置 Supabase 和 OpenAI 的环境变量。
-- **Supabase:**
-  - Supabase 项目本身是云服务，无需额外部署。
-  - 确保生产环境的数据库配置 (如连接池、索引) 得到优化。
-  - 定期备份数据库。
+  @@index([conversationId])
+  @@map("messages")
+}
+```
+
+### 4.3 Prisma操作实例
+
+以下是使用Prisma进行数据库操作的代码示例：
+
+```typescript
+// lib/prisma.ts
+import { PrismaClient } from '@prisma/client'
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
+
+export const prisma = globalForPrisma.prisma || new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+export default prisma
+```
+
+创建新会话示例：
+
+```typescript
+// 创建新会话
+async function createConversation(userId: string, title: string) {
+  return await prisma.conversation.create({
+    data: {
+      userId,
+      title,
+      model: 'gpt-4',
+    },
+  })
+}
+
+// 获取用户所有会话
+async function getUserConversations(userId: string) {
+  return await prisma.conversation.findMany({
+    where: { userId },
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      messages: {
+        orderBy: { createdAt: 'asc' },
+        take: 1, // 只获取第一条消息作为预览
+      },
+    },
+  })
+}
+
+// 添加消息到会话
+async function addMessageToConversation(
+  conversationId: string,
+  role: 'user' | 'assistant',
+  content: string,
+  thinkingProcess?: string,
+) {
+  return await prisma.message.create({
+    data: {
+      conversationId,
+      role,
+      content,
+      thinkingProcess,
+    },
+  })
+}
+```
+
+## 5. API接口设计
+
+### 5.1 身份认证API
+
+- `POST /api/auth/register`: 用户注册
+- `POST /api/auth/login`: 用户登录
+- `POST /api/auth/logout`: 用户登出
+- `GET /api/auth/session`: 获取当前会话
+- `GET /api/auth/providers`: 获取支持的第三方登录提供商
+
+### 5.2 对话API
+
+- `POST /api/chat/stream`: 流式对话请求
+- `GET /api/conversations`: 获取用户的所有会话
+- `GET /api/conversations/:id`: 获取特定会话的详情
+- `POST /api/conversations`: 创建新会话
+- `DELETE /api/conversations/:id`: 删除会话
+- `GET /api/conversations/:id/messages`: 获取会话的所有消息
+
+## 6. 前端页面结构
+
+### 6.1 页面路由
+
+- `/`: 首页（营销页面）
+- `/login`: 登录页面
+- `/register`: 注册页面
+- `/chat`: 对话主页面
+- `/chat/:id`: 特定会话页面
+- `/profile`: 用户资料页面
+
+### 6.2 组件结构
+
+#### 全局组件
+
+- `Layout`: 全局布局组件
+- `Navbar`: 导航栏组件
+- `Footer`: 页脚组件
+- `ThemeProvider`: 主题提供者
+
+#### 身份认证组件
+
+- `LoginForm`: 登录表单
+- `RegisterForm`: 注册表单
+- `OAuthButtons`: 第三方登录按钮
+- `AuthGuard`: 身份认证守卫
+
+#### 对话界面组件
+
+- `Sidebar`: 侧边栏组件
+  - `NewChatButton`: 新对话按钮
+  - `ConversationList`: 对话历史列表
+  - `UserProfile`: 用户资料卡
+- `ChatArea`: 对话区域组件
+  - `MessageList`: 消息列表
+  - `MessageItem`: 消息项
+  - `ThinkingProcess`: 思考过程展示
+  - `ChatInput`: 输入框组件
+  - `StreamingOutput`: 流式输出组件
+
+## 7. 认证流程
+
+1. 用户访问对话页面
+2. 中间件检查用户是否已登录
+3. 若未登录，重定向至登录页面
+4. 用户可选择：
+   - 邮箱密码登录/注册
+   - 手机号验证码登录
+   - Google账号登录
+   - GitHub账号登录
+5. 认证成功后，创建用户会话
+6. 重定向回对话页面
+
+## 8. 对话流程
+
+1. 用户发送消息
+2. 前端添加消息到UI，显示加载状态
+3. 消息通过API发送至服务端
+4. 服务端通过Vercel AI SDK处理请求：
+   - 获取历史消息作为上下文
+   - 调用AI模型API进行流式响应
+   - 将响应流式传输回前端
+5. 前端实时渲染AI的回复
+6. 对话完成后，保存消息到数据库
+
+## 9. 部署与运维
+
+### 9.1 环境配置
+
+开发、测试和生产环境分别配置不同的环境变量：
+
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase项目URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase匿名密钥
+- `OPENAI_API_KEY`: OpenAI API密钥(或其他AI提供商)
+- `DATABASE_URL`: 数据库连接URL
+- `NEXT_PUBLIC_APP_URL`: 应用部署URL
+- `PRISMA_DATABASE_URL`: Prisma数据库连接URL（可与DATABASE_URL相同）
+
+### 9.2 CI/CD流程
+
+1. 开发者提交代码到GitHub
+2. GitHub Actions自动运行测试
+3. 测试通过后，自动部署到Vercel
+4. Vercel执行构建和部署流程
+5. 应用上线并可访问
+
+### 9.3 依赖管理
+
+项目使用pnpm作为包管理器，相比npm和yarn有以下优势：
+
+- 高效的磁盘空间利用（内容寻址存储）
+- 更快的安装速度
+- 严格的依赖管理（防止幽灵依赖）
+- 内置的monorepo支持
+
+主要的pnpm命令：
+
+```bash
+# 安装所有依赖
+pnpm install
+
+# 添加新依赖
+pnpm add [package]
+
+# 添加开发依赖
+pnpm add -D [package]
+
+# 运行脚本
+pnpm [script] # 例如：pnpm dev, pnpm build
+
+# 更新依赖
+pnpm update
+```
+
+主要配置文件：
+
+- `pnpm-workspace.yaml`: 工作空间配置（如果是monorepo）
+- `.npmrc`: npm/pnpm配置
+- `package.json`: 项目依赖和脚本定义
+
+## 10. 安全考量
+
+- 所有API端点都经过身份验证
+- 敏感信息(API密钥等)存储在环境变量中
+- 使用HTTPS确保数据传输安全
+- 实施速率限制防止滥用
+- 前端输入验证和后端数据校验
+- SQL注入防护(通过Supabase的参数化查询)
+
+## 11. 性能优化
+
+- 使用Next.js的SSR/SSG提高首屏加载速度
+- 图片优化和懒加载
+- API响应缓存
+- 客户端状态管理优化
+- 流式数据传输减少等待时间
+- 代码分割减小包大小
+
+## 12. 扩展与迭代计划
+
+### 12.1 近期计划
+
+- 实现多AI模型切换功能
+- 添加语音输入/输出支持
+- 增强移动端体验
+- 添加多语言支持
+
+### 12.2 中长期规划
+
+- 实现文件上传和图像分析功能
+- 开发插件系统和工具集成
+- 构建用户反馈和不断学习机制
+- 添加高级分析和数据可视化
+
+## 13. 开发流程与规范
+
+### 13.1 Git工作流
+
+- 主分支: `main`
+- 开发分支: `dev`
+- 功能分支: `feature/功能名称`
+- 修复分支: `fix/问题描述`
+
+### 13.2 代码规范
+
+- 使用ESLint和Prettier保持代码风格一致
+- 组件按功能模块化组织
+- 使用TypeScript类型定义提高代码质量
+- 编写单元测试和集成测试
+- 代码评审流程
+
+### 13.3 数据库迁移流程
+
+使用Prisma进行数据库版本控制和迁移：
+
+1. 修改`schema.prisma`文件定义模型
+2. 生成迁移文件: `npx prisma migrate dev --name 迁移名称`
+3. 应用迁移到开发环境: `npx prisma migrate dev`
+4. 生成Prisma客户端: `npx prisma generate`
+5. 应用迁移到生产环境: `npx prisma migrate deploy`
+
+迁移文件应当纳入版本控制，确保所有环境数据库结构一致。
+
+### 13.4 项目安装与启动
+
+新开发人员加入项目的初始化流程：
+
+1. 安装Node.js (推荐v18+) 和pnpm：
+   ```bash
+   npm install -g pnpm
+   ```
+
+2. 克隆项目仓库：
+   ```bash
+   git clone https://github.com/your-org/aigyy.git
+   cd aigyy
+   ```
+
+3. 安装依赖：
+   ```bash
+   pnpm install
+   ```
+
+4. 配置环境变量：
+   ```bash
+   cp .env.example .env.local
+   # 编辑.env.local填入必要配置
+   ```
+
+5. 初始化数据库：
+   ```bash
+   pnpm prisma generate
+   pnpm prisma migrate dev
+   ```
+
+6. 启动开发服务器：
+   ```bash
+   pnpm dev
+   ```
+
+### 13.5 常用开发脚本
+
+项目中定义了以下pnpm脚本：
+
+- `pnpm dev`: 启动开发服务器
+- `pnpm build`: 构建生产版本
+- `pnpm start`: 启动生产服务器
+- `pnpm lint`: 运行eslint进行代码检查
+- `pnpm format`: 使用prettier格式化代码
+- `pnpm test`: 运行单元测试
+- `pnpm db:studio`: 启动Prisma Studio查看数据库
+- `pnpm db:migrate`: 执行数据库迁移 (使用 `prisma migrate dev`)
+- `pnpm db:generate`: 生成Prisma客户端 (使用 `prisma generate`)
+- `pnpm db:push`: 将schema同步到数据库 (开发时用，使用 `prisma db push`)
+- `pnpm db:seed`: 填充示例数据到数据库
+
+## 6. API架构
+
+API层使用Hono框架构建，直接对接服务层(Service Layer)。
+
+```
+[Next.js API Route (app/api/[[...route]]/route.ts)]
+          │
+          ▼
+[Hono Router (server/api/index.ts)]
+          │
+          ├─▶ [Middleware (server/middleware/*)]
+          │
+          └─▶ [Hono Route Handlers (server/api/*.ts)]
+                  │
+                  ▼
+              [Service Layer (server/services/*.ts)]
+                  │
+                  ▼
+              [Data Access (Prisma / Supabase Client)]
+```
+
+### 6.1 路由定义
+
+- Hono路由文件 (`server/api/*.ts`) 负责定义API端点和HTTP方法。
+- 路由处理函数直接调用对应的服务层方法来处理业务逻辑。
+
+### 6.2 中间件
+
+- 使用Hono中间件处理通用逻辑，如认证、日志、错误处理、速率限制等。
+- 中间件在 `server/middleware/` 目录下定义。
+
+### 6.3 服务层
+
+- 服务层 (`server/services/*.ts`) 封装核心业务逻辑。
+- 每个服务对应一个业务领域（如认证、聊天、会话管理）。
+- 服务层负责与数据访问层（Prisma）交互。
 
 ---
 
-这个架构文档应该能为你提供一个清晰的蓝图。冲吧，少年！我看好你！
+文档更新日期: 2025年6月23日
