@@ -1,5 +1,22 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# 前端开发指南
+
+本规则为 `src/app`, `src/components`, 和 `src/module` 目录下的前端组件和模块开发提供指导。
+
+## 目录结构
+
+-   `src/app`: 包含 Next.js 路由、页面布局和全局样式 ([src/app/layout.tsx](mdc:src/app/layout.tsx), [src/app/page.tsx](mdc:src/app/page.tsx), [src/app/globals.css](mdc:src/app/globals.css))。
+-   `src/components`: 存放可复用的 UI 组件，可能使用 shadcn/ui ([src/components/ui/](mdc:src/components/ui))。主题提供者位于此处 ([src/components/theme-provider.tsx](mdc:src/components/theme-provider.tsx))。
+-   `src/module`: 包含特定功能的模块，按领域组织代码 (例如 `chat`, `dashboard`, `auth`)。
+
+## 最佳实践
+
+-   **组件设计:** 遵循 React 最佳实践。使用 `src/components/ui` 中的 `shadcn/ui` 组件以保持一致性。确保组件可复用且文档齐全。
+-   **状态管理:** 优先使用局部状态或 React Context ([src/contexts/auth-context.tsx](mdc:src/contexts/auth-context.tsx)) 来管理模块内或跨组件共享的状态。
+-   **样式:** 使用 Tailwind CSS 进行样式设置，遵守 `tailwind.config.js` 和 `globals.css` 中的配置。
+-   **路由:** 利用 Next.js App Router 在 `src/app` 目录中定义路由。
+-   **模块化:** 将功能封装在 `src/module` 中各自对应的目录内。目标是实现模块内高内聚、模块间低耦合。
